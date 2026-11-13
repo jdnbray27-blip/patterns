@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Number 100</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; padding:0; height:100%; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background:#eef2f9; color:#2b3144;
+    display:flex; flex-direction:column; align-items:center;
+    padding:14px 14px 10px; overflow:hidden; user-select:none;
+  }
+  .screen { display:none; width:100%; max-width:640px; flex-direction:column; align-items:center; }
+  .screen.on { display:flex; }
+
+  /* ---- home ---- */
+  .levelbadge { background:#fff; border-radius:16px; padding:8px 18px; box-shadow:0 2px 0 #d3dcec;
+    font-size:14px; font-weight:700; color:#5a6a8c; margin-top:6px; }
+  .levelbadge b { color:#3f5fae; }
+  h1 { font-size:26px; margin:14px 0 4px; color:#3f5fae; }
+  .tiles { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:18px; }
+  .tile {
+    width:160px; border:none; border-radius:20px; background:#fff; box-shadow:0 3px 0 #d3dcec;
+    padding:22px 10px 16px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .tile:active { transform:translateY(2px); box-shadow:none; }
+  .tile .ico { font-size:46px; }
+  .tile .lbl { font-size:16px; font-weight:800; color:#2b3144; }
+  .tile .sub { font-size:12px; color:#8b94ab; }
+
+  /* ---- shared game chrome ---- */
+  .topbar { width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .homebtn { border:none; background:#fff; border-radius:12px; padding:8px 14px; font-size:14px; font-weight:700;
+    color:#5a6a8c; box-shadow:0 2px 0 #d3dcec; cursor:pointer; }
+  .homebtn:active { transform:translateY(2px); box-shadow:none; }
+  .misscount { font-size:12px; color:#9fb0bd; background:#fff; border-radius:8px; padding:3px 8px; box-shadow:0 1px 0 #d8e2ea; }
+
+  .prompt { font-size:16px; color:#5a6a8c; margin:10px 0 2px; text-align:center; }
+  .speakrow { display:flex; align-items:center; gap:14px; margin:8px 0 18px; }
+  .speakbtn { width:84px; height:84px; border-radius:50%; border:none; background:#3f5fae; color:#fff;
+    font-size:34px; box-shadow:0 3px 0 #2d4680; cursor:pointer; }
+  .speakbtn:active { transform:translateY(2px); box-shadow:none; }
+
+  .options { display:flex; gap:18px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+  .opt { width:min(24vw,100px); height:min(24vw,100px); border-radius:18px; border:none;
+    background:#fff; box-shadow:0 3px 0 #d3dcec; font-size:min(11vw,42px); font-weight:800; color:#2b3144; cursor:pointer; }
+  .opt:active { transform:translateY(2px); box-shadow:none; }
+  .opt.wrong { animation:wiggle .32s ease; }
+  @keyframes wiggle {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(7px)}
+    60%{transform:translateX(-5px)} 80%{transform:translateX(3px)}
+  }
+
+  .hooray { margin-top:18px; text-align:center; display:none; min-height:90px; }
+  .hooray.on { display:block; animation:pop .25s ease-out; }
+  @keyframes pop { from{transform:scale(.6);opacity:0} to{transform:scale(1);opacity:1} }
+  .hooray .txt { font-size:30px; font-weight:800; color:#3f5fae; }
+  .nextbtn { margin-top:10px; border:none; border-radius:16px; padding:13px 26px; font-size:18px; font-weight:800;
+    background:#3f5fae; color:#fff; box-shadow:0 2px 0 #2d4680; cursor:pointer; }
+  .nextbtn:active { transform:translateY(2px); box-shadow:none; }
+
+  .levelup { position:fixed; top:14px; left:50%; transform:translateX(-50%); background:#ffdf7a; color:#6b5a0d;
+    font-weight:800; padding:10px 20px; border-radius:14px; box-shadow:0 3px 0 #e0c357; display:none; z-index:20; }
+  .levelup.on { display:block; animation:pop .25s ease-out; }
+
+  /* ---- blocks game ---- */
+  .blockbox { background:#fff; border-radius:18px; padding:16px; margin:10px 0 16px; min-width:260px; }
+  .tenrow { display:flex; gap:3px; margin-bottom:4px; }
+  .onesrow { display:flex; gap:3px; margin-top:8px; flex-wrap:wrap; max-width:220px; }
+  .rock { width:16px; height:16px; border-radius:50%; background:radial-gradient(circle at 34% 30%, #9aa0a6, #5f666d 70%, #4a5055); box-shadow:inset -1px -2px 3px rgba(0,0,0,.35); }
+  .rock.loose { background:radial-gradient(circle at 34% 30%, #f3c06b, #dd9426 70%, #c07d1a); }
+
+  /* ---- grid game ---- */
+  .n100grid { display:grid; grid-template-columns:repeat(10,1fr); gap:3px; width:min(80vw,320px);
+    background:#dde4f2; padding:5px; border-radius:12px; margin:10px 0 16px; }
+  .gcell { aspect-ratio:1/1; background:#fff; border-radius:5px; }
+  .gcell.target { background:#3f5fae; animation:pop .2s ease-out; }
+
+  .gear { position:fixed; top:8px; left:10px; width:36px; height:36px; border-radius:50%; border:none;
+          background:#fff; box-shadow:0 1px 0 #d8e2ea; font-size:17px; cursor:pointer; }
+  .panel { position:fixed; inset:0; background:rgba(40,46,60,.5); display:none; align-items:center; justify-content:center; z-index:9; }
+  .panel.on { display:flex; }
+  .panel .box2 { background:#fff; border-radius:18px; padding:20px; width:min(90vw,380px); }
+  .panel h3 { margin:0 0 10px; font-size:17px; }
+  .panel .row { display:flex; align-items:center; gap:8px; margin-top:10px; font-size:14px; }
+  .panel button { margin-top:16px; width:100%; border:none; border-radius:12px; padding:11px; font-size:15px;
+    font-weight:700; background:#3f5fae; color:#fff; cursor:pointer; }
+  .panel .row2 { display:flex; gap:8px; margin-top:10px; }
+  .panel .row2 button { margin-top:0; flex:1; background:#eef2f9; color:#3f5fae; }
+  .panel .row2 button.active { background:#3f5fae; color:#fff; }
+</style>
+</head>
+<body>
+
+<button class="gear" id="gear">&#9881;</button>
+<div class="levelup" id="levelup">&#127881; Level up!</div>
+
+<!-- HOME -->
+<div class="screen on" id="screen-home">
+  <h1>Number 100</h1>
+  <div class="levelbadge">Level <b id="lvlNum">1</b> &middot; numbers up to <b id="lvlRange">20</b></div>
+  <div class="tiles">
+    <button class="tile" data-game="hear">
+      <div class="ico">&#128266;</div>
+      <div class="lbl">Hear It</div>
+      <div class="sub">listen, then tap</div>
+    </button>
+    <button class="tile" data-game="blocks">
+      <div class="ico">&#129689;</div>
+      <div class="lbl">Blocks</div>
+      <div class="sub">count the rocks</div>
+    </button>
+    <button class="tile" data-game="grid">
+      <div class="ico">&#128313;</div>
+      <div class="lbl">Grid</div>
+      <div class="sub">find the spot</div>
+    </button>
+  </div>
+</div>
+
+<!-- HEAR IT -->
+<div class="screen" id="screen-hear">
+  <div class="topbar"><button class="homebtn" id="home1">&#8592; Menu</button><div class="misscount" id="miss1">tries: 0</div></div>
+  <div class="prompt">Listen, then tap the number</div>
+  <div class="speakrow"><button class="speakbtn" id="replay1">&#128266;</button></div>
+  <div class="options" id="opts1"></div>
+  <div class="hooray" id="hooray1"><div class="txt">&#127881; Hooray!</div><button class="nextbtn" id="next1">Next</button></div>
+</div>
+
+<!-- BLOCKS -->
+<div class="screen" id="screen-blocks">
+  <div class="topbar"><button class="homebtn" id="home2">&#8592; Menu</button><div class="misscount" id="miss2">tries: 0</div></div>
+  <div class="prompt">How many rocks?</div>
+  <div class="blockbox" id="blockbox"></div>
+  <div class="options" id="opts2"></div>
+  <div class="hooray" id="hooray2"><div class="txt">&#127881; Hooray!</div><button class="nextbtn" id="next2">Next</button></div>
+</div>
+
+<!-- GRID -->
+<div class="screen" id="screen-grid">
+  <div class="topbar"><button class="homebtn" id="home3">&#8592; Menu</button><div class="misscount" id="miss3">tries: 0</div></div>
+  <div class="prompt">What number lives here?</div>
+  <div class="n100grid" id="n100grid"></div>
+  <div class="options" id="opts3"></div>
+  <div class="hooray" id="hooray3"><div class="txt">&#127881; Hooray!</div><button class="nextbtn" id="next3">Next</button></div>
+</div>
+
+<div class="panel" id="panel">
+  <div class="box2">
+    <h3>Grown-up settings</h3>
+    <div class="row"><input type="checkbox" id="audioOn" checked> <span>Say numbers out loud</span></div>
+    <div class="row"><span>Total wrong taps this session:</span> <b id="sessionMiss">0</b></div>
+    <div style="margin-top:14px;font-size:13px;color:#8b94ab">Set level by hand:</div>
+    <div class="row2">
+      <button data-setlvl="0">Lvl 1 (1-20)</button>
+      <button data-setlvl="1">Lvl 2 (1-50)</button>
+      <button data-setlvl="2">Lvl 3 (1-100)</button>
+    </div>
+    <button id="resetProgress" style="background:#e0566b;margin-top:18px">Reset all progress</button>
+    <button id="closePanel">Close</button>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const RANGES = [20, 50, 100];
+const STORE_KEY = 'number100_progress_v1';
+
+let progress = loadProgress();
+let audioOn = true;
+let sessionMiss = 0;
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { level: 0, stats: {} };
+}
+function saveProgress() { localStorage.setItem(STORE_KEY, JSON.stringify(progress)); }
+
+function range() { return RANGES[progress.level]; }
+
+function say(t) {
+  if (!audioOn || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(String(t));
+  u.rate = 0.85; u.pitch = 1.05;
+  speechSynthesis.speak(u);
+}
+
+function recordResult(num, correct) {
+  const s = progress.stats[num] || { seen: 0, correct: 0 };
+  s.seen++;
+  if (correct) s.correct++;
+  progress.stats[num] = s;
+  saveProgress();
+  checkLevelUp();
+}
+
+function checkLevelUp() {
+  if (progress.level >= RANGES.length - 1) return;
+  const r = range();
+  let mastered = 0;
+  for (let n = 1; n <= r; n++) {
+    const s = progress.stats[n];
+    if (s && (s.correct - (s.seen - s.correct)) >= 2) mastered++;
+  }
+  if (mastered / r >= 0.85) {
+    progress.level++;
+    saveProgress();
+    renderHome();
+    flashLevelUp();
+  }
+}
+
+function flashLevelUp() {
+  const el = $('levelup');
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  setTimeout(() => el.classList.remove('on'), 1800);
+}
+
+function renderHome() {
+  $('lvlNum').textContent = progress.level + 1;
+  $('lvlRange').textContent = range();
+}
+
+function reverseDigits(n) {
+  if (n < 10) return null;
+  const tens = Math.floor(n/10), ones = n%10;
+  const rev = ones*10 + tens;
+  return rev === n ? null : rev;
+}
+
+function pickTarget(r, avoid) {
+  const weighted = [];
+  for (let n = 1; n <= r; n++) {
+    if (n === avoid) continue;
+    const s = progress.stats[n];
+    let w = 1;
+    if (!s) w += 3;
+    else w += Math.max(0, (s.seen - s.correct)) * 2;
+    for (let i = 0; i < w; i++) weighted.push(n);
+  }
+  return weighted[Math.floor(Math.random()*weighted.length)];
+}
+
+function makeOptions(target, r) {
+  const cand = new Set();
+  [target-1, target+1, target-10, target+10, reverseDigits(target)].forEach(c => {
+    if (c != null && c >= 1 && c <= r && c !== target) cand.add(c);
+  });
+  const decoys = [];
+  const pool = [...cand];
+  while (decoys.length < 2 && pool.length) {
+    const i = Math.floor(Math.random()*pool.length);
+    decoys.push(pool.splice(i,1)[0]);
+  }
+  while (decoys.length < 2) {
+    const c = 1 + Math.floor(Math.random()*r);
+    if (c !== target && !decoys.includes(c)) decoys.push(c);
+  }
+  const opts = [target, ...decoys];
+  for (let i = opts.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  return opts;
+}
+
+function wiggleEl(el) {
+  el.classList.remove('wrong'); void el.offsetWidth; el.classList.add('wrong');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  $(id).classList.add('on');
+}
+
+/* ================= HEAR IT ================= */
+let hearTarget = null, hearMiss = 0;
+function startHear() {
+  $('hooray1').classList.remove('on');
+  hearTarget = pickTarget(range(), hearTarget);
+  const opts = makeOptions(hearTarget, range());
+  const box = $('opts1'); box.innerHTML = '';
+  opts.forEach(n => {
+    const b = document.createElement('button');
+    b.className = 'opt'; b.textContent = n;
+    b.onclick = () => tapHear(n, b);
+    box.appendChild(b);
+  });
+  setTimeout(() => say(hearTarget), 300);
+}
+function tapHear(n, el) {
+  if (n === hearTarget) {
+    recordResult(hearTarget, true);
+    $('hooray1').classList.add('on');
+    say('That is ' + hearTarget);
+  } else {
+    recordResult(hearTarget, false);
+    sessionMiss++; $('miss1').textContent = 'tries: ' + sessionMiss; $('sessionMiss').textContent = sessionMiss;
+    wiggleEl(el);
+  }
+}
+$('replay1').onclick = () => say(hearTarget);
+$('next1').onclick = startHear;
+
+/* ================= BLOCKS ================= */
+let blockTarget = null;
+function startBlocks() {
+  $('hooray2').classList.remove('on');
+  blockTarget = pickTarget(range(), blockTarget);
+  const tens = Math.floor(blockTarget/10), ones = blockTarget%10;
+  const bb = $('blockbox'); bb.innerHTML = '';
+  for (let t = 0; t < tens; t++) {
+    const row = document.createElement('div'); row.className = 'tenrow';
+    for (let i = 0; i < 10; i++) { const r = document.createElement('div'); r.className = 'rock'; row.appendChild(r); }
+    bb.appendChild(row);
+  }
+  if (ones > 0) {
+    const row = document.createElement('div'); row.className = 'onesrow';
+    for (let i = 0; i < ones; i++) { const r = document.createElement('div'); r.className = 'rock loose'; row.appendChild(r); }
+    bb.appendChild(row);
+  }
+  const opts = makeOptions(blockTarget, range());
+  const box = $('opts2'); box.innerHTML = '';
+  opts.forEach(n => {
+    const b = document.createElement('button');
+    b.className = 'opt'; b.textContent = n;
+    b.onclick = () => tapBlocks(n, b);
+    box.appendChild(b);
+  });
+}
+function tapBlocks(n, el) {
+  if (n === blockTarget) {
+    recordResult(blockTarget, true);
+    $('hooray2').classList.add('on');
+    say('That is ' + blockTarget);
+  } else {
+    recordResult(blockTarget, false);
+    sessionMiss++; $('miss2').textContent = 'tries: ' + sessionMiss; $('sessionMiss').textContent = sessionMiss;
+    wiggleEl(el);
+  }
+}
+$('next2').onclick = startBlocks;
+
+/* ================= GRID ================= */
+let gridTarget = null;
+function startGrid() {
+  $('hooray3').classList.remove('on');
+  gridTarget = pickTarget(range(), gridTarget);
+  const r = range();
+  const g = $('n100grid'); g.innerHTML = '';
+  g.style.gridTemplateRows = `repeat(${r/10}, 1fr)`;
+  for (let n = 1; n <= r; n++) {
+    const c = document.createElement('div');
+    c.className = 'gcell' + (n === gridTarget ? ' target' : '');
+    g.appendChild(c);
+  }
+  const opts = makeOptions(gridTarget, range());
+  const box = $('opts3'); box.innerHTML = '';
+  opts.forEach(n => {
+    const b = document.createElement('button');
+    b.className = 'opt'; b.textContent = n;
+    b.onclick = () => tapGrid(n, b);
+    box.appendChild(b);
+  });
+}
+function tapGrid(n, el) {
+  if (n === gridTarget) {
+    recordResult(gridTarget, true);
+    $('hooray3').classList.add('on');
+    say('That is ' + gridTarget);
+  } else {
+    recordResult(gridTarget, false);
+    sessionMiss++; $('miss3').textContent = 'tries: ' + sessionMiss; $('sessionMiss').textContent = sessionMiss;
+    wiggleEl(el);
+  }
+}
+$('next3').onclick = startGrid;
+
+/* ================= nav & settings ================= */
+document.querySelectorAll('.tile').forEach(t => {
+  t.onclick = () => {
+    const g = t.dataset.game;
+    if (g === 'hear') { showScreen('screen-hear'); startHear(); }
+    if (g === 'blocks') { showScreen('screen-blocks'); startBlocks(); }
+    if (g === 'grid') { showScreen('screen-grid'); startGrid(); }
+  };
+});
+$('home1').onclick = () => { showScreen('screen-home'); renderHome(); };
+$('home2').onclick = () => { showScreen('screen-home'); renderHome(); };
+$('home3').onclick = () => { showScreen('screen-home'); renderHome(); };
+
+$('gear').onclick = () => $('panel').classList.add('on');
+$('closePanel').onclick = () => $('panel').classList.remove('on');
+$('panel').onclick = e => { if (e.target === $('panel')) $('panel').classList.remove('on'); };
+$('audioOn').onchange = e => audioOn = e.target.checked;
+$('resetProgress').onclick = () => {
+  progress = { level: 0, stats: {} };
+  saveProgress();
+  renderHome();
+  $('panel').classList.remove('on');
+};
+document.querySelectorAll('[data-setlvl]').forEach(b => {
+  b.onclick = () => {
+    progress.level = +b.dataset.setlvl;
+    saveProgress();
+    renderHome();
+    $('panel').classList.remove('on');
+  };
+});
+
+renderHome();
+</script>
+</body>
+</html>
